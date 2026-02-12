@@ -1,6 +1,7 @@
 package com.star.aicodehelper.agent.core;
 
 import com.star.aicodehelper.service.AgentMessageService;
+import com.star.aicodehelper.ai.tools.AmapTool;
 import com.star.aicodehelper.ai.tools.WebSearchTool;
 import dev.langchain4j.model.chat.ChatModel;
 import org.springframework.stereotype.Component;
@@ -9,10 +10,15 @@ import org.springframework.stereotype.Component;
 public class KoneManus extends ToolCallAgent {
 
     private final WebSearchTool webSearchTool;
+    private final AmapTool amapTool;
 
-    public KoneManus(ChatModel myQwenChatModel, WebSearchTool webSearchTool, AgentMessageService agentMessageService) {
+    public KoneManus(ChatModel myQwenChatModel, 
+                     WebSearchTool webSearchTool, 
+                     AmapTool amapTool,
+                     AgentMessageService agentMessageService) {
         super(myQwenChatModel);
         this.webSearchTool = webSearchTool;
+        this.amapTool = amapTool;
         this.setAgentMessageService(agentMessageService);
         // 重新注册以确保依赖注入后工具可用
         registerTools(); 
@@ -29,5 +35,11 @@ public class KoneManus extends ToolCallAgent {
                 return webSearchTool.searchWeb(query);
             }
         );
+
+        if (amapTool != null) {
+            addTool("Weather", "Useful for checking weather conditions in a specific city. Input should be the city name (e.g., 'Shanghai', 'Beijing').", 
+                city -> amapTool.getWeather(city)
+            );
+        }
     }
 }

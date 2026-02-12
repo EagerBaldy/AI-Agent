@@ -1,55 +1,50 @@
 version: '3.8'
-services:
-  db:
-    image: mysql:8.0
-    container_name: ai-code-helper-db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ai_code_helper
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./sql/create_table.sql:/docker-entrypoint-initdb.d/init.sql
-      - mysql_data:/var/lib/mysql
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-    networks:
-      - app-network
 
+services:
   backend:
     build: .
     container_name: ai-code-helper-backend
     ports:
       - "8081:8081"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/ai_code_helper?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: root
+      - TZ=Asia/Shanghai
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/ai_code_helper?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=1234
     depends_on:
       - db
     networks:
-      - app-network
+      - ai-net
+    restart: always
 
   frontend:
     build: ./ai-code-helper-frontend
     container_name: ai-code-helper-frontend
-    networks:
-      - app-network
-
-  nginx:
-    image: nginx:stable-alpine
-    container_name: ai-code-helper-nginx
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - "3001:80"
     depends_on:
-      - frontend
       - backend
     networks:
-      - app-network
+      - ai-net
+    restart: always
+
+  db:
+    image: mysql:8.0
+    container_name: ai-code-helper-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=ai_code_helper
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./sql/create_table.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ai-net
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
 
 networks:
-  app-network:
+  ai-net:
     driver: bridge
 
 volumes:

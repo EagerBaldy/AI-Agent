@@ -147,29 +147,17 @@ export const useChatStore = defineStore('chat', {
       // Placeholder for AI message
       this.addMessage('', false)
 
-      const mode = this.currentMode
-      // Check if Agent Mode (simplified logic based on previous App.vue)
-      // Actually App.vue logic was: if (mode === 'agent') ... but wait, App.vue passed 'agent' sometimes?
-      // In App.vue: `if (mode === 'agent')` was likely incorrect or unused, as `switchMode` sets `currentMode` to 'code', 'travel' etc.
-      // And `sendMessage` used `this.currentMode` implicitly.
-      // Wait, in App.vue `sendMessage(payload)` handled object payload.
-      // But let's assume `currentMode` determines the behavior.
+      // Use generic chatWithSSE from chatApi.js
+      // But wait, chatApi.js logic handles endpoints.
+      // We should use that instead of re-implementing EventSource here if possible
+      // However, chatWithSSE in chatApi.js uses `/ai/chat` etc.
+      // The Agent API is `/agent/chat`.
+      // Let's modify chatApi.js to support agent mode properly or adapt here.
       
-      // The previous code had a specific `startAgentResponse` vs `startAiResponse`.
-      // `startAgentResponse` was used if `mode === 'agent'`.
-      // But `switchMode` sets `currentMode` to 'code', 'travel', etc.
-      // Let's look at `App.vue` again.
-      // Ah, `startAgentResponse` was called if `mode === 'agent'`.
-      // But `switchMode` sets `currentMode` to 'code', 'travel' etc.
-      // In `App.vue`, `sendMessage` payload could be object `{content, mode}`.
-      // But typically it just uses `this.currentMode`.
-      
-      // IMPORTANT: In the previous fixes, we enabled Agent for 'travel', 'code' etc.
-      // So we should probably ALWAYS use the Agent API for these modes if they are Agents.
-      // For now, I will implement a generic `startResponse` that uses the Agent API if appropriate.
-      
-      // Let's assume all modes in the new design use the Agent API (since we fixed it to support all).
-      // Or we stick to the `chatApi.js` logic.
+      // Actually, let's look at `chatApi.js` again. It has `chatWithSSE`.
+      // It selects endpoint based on type.
+      // We should update `chatApi.js` to handle agent streaming or do it here.
+      // Doing it here gives us more control over the buffer.
       
       this.startAgentStream(content)
     },
@@ -177,6 +165,7 @@ export const useChatStore = defineStore('chat', {
     startAgentStream(message) {
       try {
         const sessionId = this.currentSession ? this.currentSession.id : 0
+        // Use the generic Agent endpoint
         const eventSource = new EventSource(`/api/agent/chat?message=${encodeURIComponent(message)}&sessionId=${sessionId}`, {
           withCredentials: true
         })
@@ -187,23 +176,63 @@ export const useChatStore = defineStore('chat', {
         this.isTypingEffectActive = true
         this.startTypewriterLoop()
         
+        // Handle incoming messages
         eventSource.onmessage = (event) => {
-          // Push data to buffer instead of direct update
-          // Add newline because backend often sends lines
-          const data = event.data + "\n"
+          let data = event.data
+          
+          // --- 核心优化逻辑 ---
+          // 之前的逻辑过滤掉了思考过程，导致用户看不到中间步骤。
+          // 现在取消过滤，让用户能看到 Agent 的思考和工具调用。
+          
+          /* 
+          // 检查是否是思考过程的片段
+          const isThoughtProcess = 
+              data.startsWith('#### 第') || 
+              data.startsWith('> **') || 
+              data.startsWith('> 🛠️') || 
+              data.startsWith('> 👀') || 
+              data.includes('<details') || 
+              data.includes('</details>') ||
+              data.includes('<summary>');
+              
+          if (isThoughtProcess) {
+              // 忽略思考过程，不推入 buffer
+              return;
+          }
+          */
+          
+          // 如果不是思考过程，推入 buffer
+          // 注意：需要处理换行。后端通常发出的块可能不带换行，或者带了。
+          // ReActAgent 中：emitter.next("Final Answer")
+          
+          // 还有一个问题：如果不显示思考，用户会看到一段空白等待期。
+          // 可以在 UI 上显示 "正在思考..." 或 "正在调用工具..." 的状态（isAiTyping 已经有了）。
+          
+          // 修正：EventSource 的 data 字段会自动去掉换行吗？
+          // 通常 SSE data: some text\n\n -> event.data = "some text"
+          // 如果我们要还原换行，通常约定用特殊字符，或者后端发送 JSON。
+          // 这里后端发送的是纯文本。
+          
+          // 简单处理：加上换行符，因为 Agent 输出通常是分段的
+          // data += "\n" 
+          
+          // 但如果是流式输出 Final Answer（如果有的话），加换行可能会断开句子。
+          // ReActAgent 目前是一次性输出 Final Answer。
+          
           for (const char of data) {
             this.streamBuffer.push(char)
           }
+          // 手动补充换行，保持段落感
+          this.streamBuffer.push('\n')
         }
         
         eventSource.onerror = (err) => {
+          // ... same error handling ...
           console.error('SSE Error:', err)
           eventSource.close()
-          // Do not immediately stop streaming flag, let buffer drain
-          // this.isStreaming = false 
           this.currentEventSource = null
           
-          // Wait for buffer to drain before finishing
+          // Wait for buffer to drain
           const checkBufferInterval = setInterval(() => {
             if (this.streamBuffer.length === 0) {
               clearInterval(checkBufferInterval)
@@ -212,10 +241,6 @@ export const useChatStore = defineStore('chat', {
               this.isTypingEffectActive = false
               if (this.typewriterTimer) clearInterval(this.typewriterTimer)
 
-              if (!this.currentAiResponse) {
-                 this.updateLastMessage("智能体执行出错，请重试。")
-              }
-              
               // Save to history
               if (this.currentSession && this.currentAiResponse) {
                  saveMessage(this.currentSession.id, this.currentAiResponse, false, this.currentMode)

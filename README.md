@@ -41,9 +41,10 @@
 *   **LangChain4j**: 1.0.0-beta1 - Java 版 LLM 应用开发框架，对标 Python LangChain。
     *   **Agent**: ReAct 架构实现（Reasoning + Acting）。
     *   **RAG**: 高级检索增强生成（Advanced RAG），支持文档切片、向量化。
-    *   **Tools**: 支持函数调用（Function Calling）和 MCP 协议集成。
+    *   **Tools**: 支持函数调用（Function Calling）和 MCP 协议集成（如 WebSearch, Amap Weather）。
     *   **Memory**: 支持 MessageWindow 和 TokenWindow 记忆管理。
 *   **Alibaba DashScope (Qwen)**: 接入通义千问大模型（qwen-turbo / qwen-plus）。
+*   **Amap API (高德地图)**: 提供地理编码和实时天气查询服务。
 *   **MyBatis-Plus**: 3.5.7 - ORM 框架，简化 CRUD 操作。
 *   **MySQL**: 8.0+ - 关系型数据库，存储用户数据和会话历史。
 *   **Lombok**: 简化 Java 代码（Getter/Setter/Builder）。
@@ -164,12 +165,14 @@ graph TD
         AgentEngine --> |Tools| ToolManager[Tool Provider]
         
         ToolManager --> |Search| WebSearch[Web Search]
+        ToolManager --> |Weather| WeatherTool[Amap Weather]
         ToolManager --> |RAG| Retriever[Document Retriever]
         Retriever --> |Vector| Embed[Embedding Model]
     end
     
     subgraph "Infrastructure & Data"
         AgentEngine --> |Inference| LLM[Alibaba Qwen LLM]
+        WeatherTool --> |API| Amap[Amap API]
         AuthService --> |CRUD| MySQL[(MySQL Database)]
         Retriever --> |Load| Knowledge[(Local Markdown Knowledge)]
     end

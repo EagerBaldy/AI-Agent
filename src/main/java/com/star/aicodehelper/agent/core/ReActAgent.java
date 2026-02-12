@@ -63,6 +63,20 @@ public abstract class ReActAgent extends BaseAgent {
 
                     AgentStep step = parseResponse(response);
                     
+                    // 检查是否重复步骤
+                    if (isDuplicateStep(context, step)) {
+                         emitter.next("#### 第 " + stepCount + " 步\n");
+                         emitter.next("> **警告**: 检测到重复执行，强制结束循环。\n\n");
+                         
+                         // 强制结束
+                         context.setFinished(true);
+                         context.setFinalAnswer("抱歉，我在执行过程中陷入了循环，无法给出确切答案。");
+                         emitter.next("\n</details>\n\n");
+                         emitter.next(context.getFinalAnswer());
+                         saveFinalAnswer(userId, sessionId, context.getFinalAnswer(), step.getThought());
+                         break;
+                    }
+
                     if (step.getAction() != null && !step.getAction().equals("None")) {
                         emitter.next("#### 第 " + stepCount + " 步\n");
                         emitter.next("> **思考**: " + step.getThought() + "\n\n");
@@ -105,6 +119,22 @@ public abstract class ReActAgent extends BaseAgent {
             }
         });
     }
+
+    private boolean isDuplicateStep(AgentContext context, AgentStep currentStep) {
+        if (context.getSteps().isEmpty()) return false;
+        
+        AgentStep lastStep = context.getSteps().get(context.getSteps().size() - 1);
+        
+        // 如果当前 Action 和 Input 与上一步完全相同
+        boolean sameAction = currentStep.getAction() != null && currentStep.getAction().equals(lastStep.getAction());
+        boolean sameInput = currentStep.getActionInput() != null && currentStep.getActionInput().equals(lastStep.getActionInput());
+        
+        // 并且 Thought 也高度相似（可选）
+        // boolean sameThought = currentStep.getThought().equals(lastStep.getThought());
+        
+        return sameAction && sameInput;
+    }
+
 
     private void saveAgentStep(Long userId, Long sessionId, AgentStep step) {
         if (agentMessageService == null || userId == null || sessionId == null) return;
@@ -208,18 +238,65 @@ public abstract class ReActAgent extends BaseAgent {
             Matcher matcher = ACTION_PATTERN.matcher(remaining);
             if (matcher.find()) {
                 step.setAction(matcher.group(1).trim());
-                step.setActionInput(matcher.group(2).trim());
+                String input = matcher.group(2).trim();
+                // 清理 Action Input，移除后续可能出现的 Observation 或 Final Answer
+                int obsIndex = input.indexOf("Observation:");
+                if (obsIndex != -1) {
+                    input = input.substring(0, obsIndex).trim();
+                }
+                int finalAnsIndex = input.indexOf("Final Answer:");
+                if (finalAnsIndex != -1) {
+                    input = input.substring(0, finalAnsIndex).trim();
+                }
+                step.setActionInput(input);
+            } else {
+                 // Action 匹配失败，可能是格式问题，或者模型产生了 Action 但没产生 Action Input
+                 // 尝试一种更宽松的解析
+                 String[] lines = remaining.split("\n");
+                 if (lines.length > 0) {
+                     String actionLine = lines[0].trim();
+                     if (actionLine.startsWith("Action:")) {
+                         step.setAction(actionLine.substring("Action:".length()).trim());
+                     }
+                 }
+                 if (lines.length > 1) {
+                     String inputLine = lines[1].trim();
+                     if (inputLine.startsWith("Action Input:")) {
+                         step.setActionInput(inputLine.substring("Action Input:".length()).trim());
+                     }
+                 }
             }
         } else {
             // 没有 Action，可能是 Final Answer
             int finalIndex = response.indexOf("Final Answer:");
             if (finalIndex != -1) {
                 step.setThought(response.substring(0, finalIndex).trim());
+                // 如果 Final Answer 后面还有内容，也需要解析出来吗？
+                // 通常 Final Answer 是最后一步。
             } else {
                 step.setThought(response);
             }
             step.setAction("None");
         }
+        
+        // 关键修复：如果模型在一次响应中同时输出了 Action 和 Final Answer，
+        // 我们需要判断是幻觉（Action在前）还是真正的结束（Final Answer在前）
+        if (response.contains("Final Answer:")) {
+             int finalIndex = response.indexOf("Final Answer:");
+             if (finalIndex != -1) {
+                 // 如果 Action 在 Final Answer 之前，说明模型幻觉了执行结果
+                 // 我们应该保留 Action，让 Agent 去真正执行工具
+                 if (actionIndex != -1 && actionIndex < finalIndex) {
+                      step.setThought(response.substring(0, actionIndex).trim());
+                      // 不设置 Action 为 None，允许执行
+                 } else {
+                      // 正常的 Final Answer，或者 Action 在 Final Answer 之后（无效）
+                      step.setAction("None");
+                      step.setThought(response.substring(0, finalIndex).trim());
+                 }
+             }
+        }
+        
         return step;
     }
     

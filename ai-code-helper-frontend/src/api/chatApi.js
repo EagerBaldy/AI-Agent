@@ -43,7 +43,12 @@ export function chatWithSSE(memoryId, message, type, onMessage, onError, onClose
     eventSource.onmessage = function(event) {
         try {
             const data = event.data
-            if (data && data.trim() !== '') {
+            // 简单判断是否为空，注意 SSE 可能会发空行保持连接
+            if (data) {
+                // 如果是换行符的转义，需要还原
+                // 约定：后端发送 \n 代表换行
+                // 但 EventSource 自动处理了 data 字段，通常是一行行的
+                // 我们的 ReActAgent 发送的可能是片段
                 onMessage(data)
             }
         } catch (error) {

@@ -1,0 +1,8 @@
+target
+.git
+.idea
+.vscode
+.DS_Store
+*.log
+ai-code-helper-frontend/node_modules
+ai-code-helper-frontend/dist
