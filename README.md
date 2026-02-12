@@ -87,35 +87,75 @@ mvn spring-boot:run
     ```bash
     npm run dev
     ```
-4.  访问 http://localhost:5173
+
+## 🏗️ 系统架构 (System Architecture)
+
+```mermaid
+graph TD
+    User[👤 用户 User] -->|交互 Interaction| Frontend[🖥️ 前端 Frontend (Vue 3)]
+    Frontend -->|HTTP / SSE| Backend[⚙️ 后端 Backend (Spring Boot)]
+    
+    subgraph "Backend Core"
+        Backend --> Controller[🎮 Controller Layer]
+        Controller --> Service[🔧 Service Layer]
+        Service --> Agent[🤖 Agent Core (ReAct)]
+        Service --> RAG[📖 RAG Engine]
+    end
+    
+    subgraph "Data & Model"
+        Agent <-->|API Call| LLM[🧠 Alibaba Qwen LLM]
+        Agent <-->|Search| Tools[🛠️ Tools (Web Search, etc)]
+        RAG <-->|Retrieve| VectorDB[🗄️ Vector Store (In-Memory)]
+        Backend <-->|CRUD| MySQL[🐬 MySQL Database]
+    end
+    
+    VectorDB <--> Docs[📄 Local Knowledge Base]
+```
 
 ## 📂 目录结构 (Directory Structure)
 
 ```
 ai-code-helper/
-├── ai-code-helper-frontend/  # 前端 Vue 项目
+├── ai-code-helper-frontend/      # 🖥️ 前端项目 (Frontend)
 │   ├── src/
-│   │   ├── api/              # API 接口
-│   │   ├── components/       # Vue 组件
-│   │   ├── stores/           # Pinia 状态管理
-│   │   └── views/            # 页面视图
-├── sql/                      # SQL 脚本
-├── src/
+│   │   ├── api/                  # API 接口封装 (Chat, User, Session)
+│   │   ├── assets/               # 静态资源 (CSS, Images)
+│   │   ├── components/           # 公共组件
+│   │   │   ├── chat/             # 聊天相关组件 (ChatArea, Message)
+│   │   │   └── layout/           # 布局组件 (Sidebar, Footer)
+│   │   ├── router/               # 路由配置 (Vue Router)
+│   │   ├── stores/               # 状态管理 (Pinia - User, Chat)
+│   │   └── views/                # 页面视图 (Home, Login, Workspace)
+│   └── vite.config.js            # Vite 配置
+│
+├── sql/                          # 💾 数据库脚本 (Create Tables)
+│
+├── src/                          # ⚙️ 后端项目 (Backend)
 │   ├── main/
 │   │   ├── java/com/star/aicodehelper/
-│   │   │   ├── agent/        # Agent 核心逻辑 (ReAct)
-│   │   │   ├── ai/           # AI 服务与工具配置
-│   │   │   ├── controller/   # Web 控制器
-│   │   │   ├── service/      # 业务逻辑服务
-│   │   │   └── model/        # 实体类
+│   │   │   ├── agent/            # 🤖 智能体核心 (Agent Core)
+│   │   │   │   ├── core/         # ReAct 引擎, ToolCall 逻辑
+│   │   │   │   └── model/        # Agent 上下文与步骤模型
+│   │   │   ├── ai/               # 🧠 AI 服务配置
+│   │   │   │   ├── guardrail/    # 安全护栏 (Input Guard)
+│   │   │   │   ├── model/        # 模型配置 (Qwen)
+│   │   │   │   ├── rag/          # RAG 检索增强生成配置
+│   │   │   │   └── tools/        # 工具实现 (Search, etc.)
+│   │   │   ├── common/           # 通用类 (Result, Response)
+│   │   │   ├── config/           # 全局配置 (Cors, WebMvc)
+│   │   │   ├── controller/       # Web 接口层
+│   │   │   ├── mapper/           # MyBatis Mapper 接口
+│   │   │   ├── model/entity/     # 数据库实体类
+│   │   │   └── service/          # 业务逻辑实现层
 │   │   └── resources/
-│   │       ├── docs/         # RAG 知识库文档
-│   │       └── application.yml # 配置文件
-└── pom.xml                   # Maven 依赖配置
+│   │       ├── docs/             # 📚 RAG 本地知识库 (Markdown)
+│   │       ├── system-prompt-*.txt # 系统提示词模板
+│   │       └── application.yml   # 项目配置文件
+│   └── test/                     # 测试用例
+│
+└── pom.xml                       # Maven 依赖管理
 ```
 
-## 🤝 贡献 (Contribution)
-欢迎提交 Issue 和 Pull Request！
 
 ## 📄 许可证 (License)
-MIT License
+None，Only me
