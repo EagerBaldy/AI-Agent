@@ -215,8 +215,6 @@ sequenceDiagram
     FE-->>User: 打字机效果展示完整回复
 ```
 
-## 🤝 贡献 (Contribution)
-欢迎提交 Issue 和 Pull Request！
 
 ## 📄 许可证 (License)
-MIT License
+NONE

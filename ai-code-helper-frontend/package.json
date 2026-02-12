@@ -1,7 +1,7 @@
 {
   "name": "ai-code-helper-frontend",
   "version": "1.0.0",
-  "description": "AI 编程小助手前端应用",
+  "description": "AI Agent Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

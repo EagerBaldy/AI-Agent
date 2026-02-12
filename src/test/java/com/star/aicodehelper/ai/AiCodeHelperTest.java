@@ -8,21 +8,21 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class AiCodeHelperTest {
+class iCodeHelperTest {
 
     @Resource
     private AiCodeHelper aiCodeHelper;
 
     @Test
     void chat() {
-        aiCodeHelper.chat("你好，我是程序员鱼皮");
+        aiCodeHelper.chat("你好，Baldy");
     }
 
     @Test
     void chatWithMessage() {
         UserMessage userMessage = UserMessage.from(
                 TextContent.from("描述图片"),
-                ImageContent.from("https://www.codefather.cn/logo.png")
+                ImageContent.from("https://www.baidu.cn/logo.png")
         );
         aiCodeHelper.chatWithMessage(userMessage);
     }
