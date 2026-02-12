@@ -35,23 +35,39 @@
 
 ## 🛠️ 技术栈 (Tech Stack)
 
-### Backend (后端)
-*   **Java 21**: 最新 LTS 版本。
-*   **Spring Boot 3.5.3**: 核心 Web 框架。
-*   **LangChain4j 1.0.0-beta1**: Java 版 LLM 应用开发框架。
-    *   支持 **ReAct Agent** 架构（思考-行动-观察循环）。
-    *   支持 **RAG** (Retrieval-Augmented Generation)。
-    *   支持 **MCP** (Model Context Protocol)。
-*   **MySQL**: 持久化存储用户、会话和消息数据。
-*   **MyBatis-Plus**: ORM 框架。
-*   **Alibaba DashScope (Qwen)**: 底座大模型 (通义千问)。
+### 💻 Backend (后端)
+*   **Java**: 21 (LTS) - 利用最新的语言特性（如虚拟线程、Record、Switch Pattern）。
+*   **Spring Boot**: 3.5.3 - 核心 Web 框架，提供自动配置和依赖注入。
+*   **LangChain4j**: 1.0.0-beta1 - Java 版 LLM 应用开发框架，对标 Python LangChain。
+    *   **Agent**: ReAct 架构实现（Reasoning + Acting）。
+    *   **RAG**: 高级检索增强生成（Advanced RAG），支持文档切片、向量化。
+    *   **Tools**: 支持函数调用（Function Calling）和 MCP 协议集成。
+    *   **Memory**: 支持 MessageWindow 和 TokenWindow 记忆管理。
+*   **Alibaba DashScope (Qwen)**: 接入通义千问大模型（qwen-turbo / qwen-plus）。
+*   **MyBatis-Plus**: 3.5.7 - ORM 框架，简化 CRUD 操作。
+*   **MySQL**: 8.0+ - 关系型数据库，存储用户数据和会话历史。
+*   **Lombok**: 简化 Java 代码（Getter/Setter/Builder）。
+*   **Jsoup**: HTML 解析库，用于网页内容抓取工具。
+*   **Maven**: 项目构建和依赖管理工具。
 
-### Frontend (前端)
-*   **Vue 3**: 渐进式 JavaScript 框架。
-*   **Vite**: 下一代前端构建工具。
-*   **Pinia**: 状态管理库。
-*   **Vue Router**: 路由管理。
-*   **Markdown CSS**: 美化的 Markdown 渲染样式。
+### 🎨 Frontend (前端)
+*   **Vue**: 3.4+ - 渐进式 JavaScript 框架，使用 Composition API (Setup Syntax)。
+*   **Vite**: 5.0+ - 下一代前端构建工具，极速冷启动。
+*   **Pinia**: 2.1+ - Vue 的专属状态管理库，替代 Vuex。
+    *   持久化存储（LocalStorage）用户偏好和会话状态。
+*   **Vue Router**: 4.0+ - 前端路由管理，支持历史模式。
+*   **Axios**: HTTP 客户端，处理 RESTful API 请求。
+*   **EventSource (SSE)**: 处理 Server-Sent Events，实现流式打字机效果。
+*   **Markdown-it / Marked**: Markdown 渲染引擎，支持代码高亮。
+*   **Highlight.js**: 代码块语法高亮。
+*   **CSS3 Variables**: 实现动态主题切换（如不同 Agent 的配色方案）。
+
+### 🔧 DevOps & Tools (开发工具)
+*   **Git**: 版本控制。
+*   **IntelliJ IDEA**: 后端开发 IDE。
+*   **VS Code**: 前端开发 IDE。
+*   **Postman / Apifox**: API 接口调试。
+*   **Mermaid**: 流程图和架构图绘制。
 
 ## 🚀 快速开始 (Getting Started)
 
