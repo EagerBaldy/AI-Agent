@@ -115,41 +115,88 @@ ai-code-helper/
 
 ## 🏗️ 项目架构 (Architecture)
 
-### 1. 技术架构图
+### 1. 系统架构设计 (System Architecture)
 ```mermaid
 graph TD
-    User[用户] --> Frontend[Vue 3 前端]
-    Frontend --> |REST API| Backend[Spring Boot 后端]
-    Backend --> |SQL| MySQL[MySQL 数据库]
-    Backend --> |API Call| LLM[通义千问大模型]
-    Backend --> |Search| RAG[本地知识库检索]
+    User[用户 User] --> |Browser| Frontend[前端 Frontend (Vue 3 + Vite)]
     
-    subgraph "Backend Core"
-    Controller --> Service
-    Service --> Agent[ReAct Agent Engine]
-    Agent --> Tools[工具集 (搜索/RAG/计算)]
+    subgraph "Presentation Layer"
+        Frontend --> |Axios| API[API Client]
+        Frontend --> |EventSource| SSE[SSE Stream Listener]
+        Frontend --> |State| Pinia[Pinia Store (User/Chat)]
+    end
+    
+    API --> |REST API| Controller[后端 Controller (Spring Boot)]
+    SSE --> |Stream| Controller
+    
+    subgraph "Business Layer"
+        Controller --> |Auth| Interceptor[Login Interceptor]
+        Controller --> |Logic| Service[Service Layer]
+        
+        subgraph "Domain Services"
+            Service --> AuthService[User Service]
+            Service --> ChatService[Chat Service]
+            Service --> AIService[AI Capability Service]
+        end
+    end
+    
+    subgraph "Intelligent Core (LangChain4j)"
+        AIService --> |Orchestrate| AgentEngine[ReAct Agent Engine]
+        
+        AgentEngine --> |Context| Memory[Message Window Memory]
+        AgentEngine --> |Planning| Planner[Chain of Thought]
+        AgentEngine --> |Tools| ToolManager[Tool Provider]
+        
+        ToolManager --> |Search| WebSearch[Web Search]
+        ToolManager --> |RAG| Retriever[Document Retriever]
+        Retriever --> |Vector| Embed[Embedding Model]
+    end
+    
+    subgraph "Infrastructure & Data"
+        AgentEngine --> |Inference| LLM[Alibaba Qwen LLM]
+        AuthService --> |CRUD| MySQL[(MySQL Database)]
+        Retriever --> |Load| Knowledge[(Local Markdown Knowledge)]
     end
 ```
 
-### 2. 核心流程 (Agent Flow)
+### 2. 智能体工作流 (Agent Workflow)
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Agent
-    participant LLM
-    participant Tools
+    autonumber
+    actor User
+    participant FE as Frontend UI
+    participant Backend as Backend API
+    participant Agent as ReAct Agent
+    participant LLM as Qwen Model
+    participant Tools as Tool Set (RAG/Search)
+    participant DB as MySQL
+
+    User->>FE: 输入问题 (e.g. "如何优化这段Java代码?")
+    FE->>Backend: 发起对话请求 (SSE Connection)
+    Backend->>DB: 保存用户消息
+    Backend->>Agent: 启动智能体 (Execute)
     
-    User->>Agent: 提出问题
-    loop ReAct Loop
-        Agent->>LLM: 思考下一步 (Thought)
-        LLM-->>Agent: 返回行动 (Action)
-        alt 需要调用工具
-            Agent->>Tools: 执行工具 (Execute)
+    loop 思考-行动-观察 循环 (ReAct Loop)
+        Agent->>Agent: 构建 Prompt (包含历史/工具描述)
+        Agent->>LLM: 请求决策 (Thought)
+        LLM-->>Agent: 返回思考与行动 (Thought & Action)
+        
+        Agent-->>FE: 实时推送思考过程 (SSE)
+        
+        alt 决定调用工具
+            Agent->>Tools: 执行工具 (e.g. 查阅文档)
             Tools-->>Agent: 返回观察结果 (Observation)
-        else 直接回答
-            Agent->>User: 返回最终答案 (Final Answer)
+            Agent-->>FE: 推送工具执行状态
+        else 决定直接回答
+            Agent->>Agent: 准备最终答案
         end
     end
+    
+    Agent->>LLM: 基于观察生成最终回答
+    LLM-->>Agent: 返回回答内容
+    Agent-->>FE: 流式推送最终结果
+    Backend->>DB: 保存 Agent 回答
+    FE-->>User: 打字机效果展示完整回复
 ```
 
 ## 🤝 贡献 (Contribution)
