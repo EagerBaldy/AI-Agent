@@ -1,0 +1,202 @@
+/* AI实时回复的Markdown样式 */
+.ai-response-text.message-markdown h1,
+.ai-response-text.message-markdown h2,
+.ai-response-text.message-markdown h3,
+.ai-response-text.message-markdown h4,
+.ai-response-text.message-markdown h5,
+.ai-response-text.message-markdown h6 {
+  margin: 0.5em 0;
+  font-weight: bold;
+}
+
+.ai-response-text.message-markdown h1 { font-size: 1.5em; }
+.ai-response-text.message-markdown h2 { font-size: 1.3em; }
+.ai-response-text.message-markdown h3 { font-size: 1.2em; }
+.ai-response-text.message-markdown h4 { font-size: 1.1em; }
+.ai-response-text.message-markdown h5 { font-size: 1em; }
+.ai-response-text.message-markdown h6 { font-size: 0.9em; }
+
+.ai-response-text.message-markdown p {
+  margin: 0.5em 0;
+}
+
+.ai-response-text.message-markdown ul,
+.ai-response-text.message-markdown ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.ai-response-text.message-markdown li {
+  margin: 0.2em 0;
+}
+
+.ai-response-text.message-markdown code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.ai-response-text.message-markdown pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin: 0.5em 0;
+}
+
+.ai-response-text.message-markdown pre code {
+  background-color: transparent;
+  padding: 0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+.ai-response-text.message-markdown blockquote {
+  border-left: 4px solid #ccc;
+  padding-left: 1em;
+  margin: 0.5em 0;
+  font-style: italic;
+  color: #666;
+}
+
+.ai-response-text.message-markdown a {
+  color: #007bff;
+  text-decoration: underline;
+}
+
+.ai-response-text.message-markdown table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+
+.ai-response-text.message-markdown th,
+.ai-response-text.message-markdown td {
+  border: 1px solid #ddd;
+  padding: 0.5em;
+  text-align: left;
+}
+
+.ai-response-text.message-markdown th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.ai-response-text.message-markdown hr {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 1em 0;
+}
+
+/* 思考过程折叠样式 */
+.ai-response-text.message-markdown details {
+  background-color: rgba(0, 0, 0, 0.02); /* 极淡的背景 */
+  border-radius: 6px;
+  margin: 8px 0 16px 0; /* 增加底部间距，与最终结果区分 */
+  padding: 0;
+  border: 1px solid rgba(0,0,0,0.05); /* 添加边框 */
+  display: block; /* 确保是块级元素 */
+  width: 100%;
+}
+
+/* 默认展开时，summary 下方添加分割线 */
+.ai-response-text.message-markdown details[open] summary {
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 4px;
+}
+
+.ai-response-text.message-markdown details > * {
+    box-sizing: border-box; /* 防止padding撑大 */
+}
+
+.ai-response-text.message-markdown summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: normal; /* 移除加粗 */
+  font-size: 0.9em; /* 减小字体 */
+  color: #666; /* 浅灰色文字 */
+  user-select: none;
+  outline: none;
+  transition: all 0.2s ease;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  list-style: none;
+  width: 100%; /* 占满宽度 */
+}
+
+/* 自定义箭头 */
+.ai-response-text.message-markdown summary::before {
+  content: "▶";
+  display: inline-block;
+  font-size: 0.8em;
+  margin-right: 6px;
+  transition: transform 0.2s ease;
+  opacity: 0.6;
+}
+
+.ai-response-text.message-markdown details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+/* 移除Webkit默认箭头 */
+.ai-response-text.message-markdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-response-text.message-markdown summary:hover {
+  color: var(--text-secondary); /* 悬停时稍微加深 */
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.ai-response-text.message-markdown details[open] summary {
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.ai-response-text.message-markdown details > div,
+.ai-response-text.message-markdown details > p,
+.ai-response-text.message-markdown details > ul,
+.ai-response-text.message-markdown details > ol {
+  padding: 4px 12px;
+  margin: 0;
+  color: #888; /* 内容文字颜色变浅 */
+  font-size: 0.85em; /* 内容字体变小 */
+  line-height: 1.5;
+  background-color: transparent;
+  border-top: none;
+}
+
+/* 针对引用块样式的思考过程进行特殊处理 */
+.ai-response-text.message-markdown details blockquote {
+  margin: 4px 0;
+  padding: 4px 10px;
+  border-left: 3px solid #ddd;
+  background-color: rgba(0,0,0,0.01);
+  color: #777;
+}
+
+/* 区分思考 */
+.ai-response-text.message-markdown details blockquote p:first-child:contains("🤔") {
+  border-left-color: #ffd700; /* 黄色思考 */
+  background-color: rgba(255, 215, 0, 0.05);
+}
+
+/* 区分工具调用 */
+.ai-response-text.message-markdown details blockquote p:first-child:contains("🛠️") {
+  border-left-color: #007bff; /* 蓝色工具 */
+  background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* 区分观察结果 */
+.ai-response-text.message-markdown details blockquote p:first-child:contains("👀") {
+  border-left-color: #28a745; /* 绿色观察 */
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+/* 去除第一个元素的 border-top */
+.ai-response-text.message-markdown details > *:nth-child(2) {
+    border-top: none;
+}
