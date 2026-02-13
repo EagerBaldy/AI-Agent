@@ -135,15 +135,15 @@ ai-code-helper/
 ### 1. 系统架构设计 (System Architecture)
 ```mermaid
 graph TD
-    User[用户 User] --> |Browser| Frontend[前端 Frontend (Vue 3 + Vite)]
+    User[用户 User] --> |Browser| Frontend["前端 Frontend (Vue 3 + Vite)"]
     
     subgraph "Presentation Layer"
         Frontend --> |Axios| API[API Client]
         Frontend --> |EventSource| SSE[SSE Stream Listener]
-        Frontend --> |State| Pinia[Pinia Store (User/Chat)]
+        Frontend --> |State| Pinia["Pinia Store (User/Chat)"]
     end
     
-    API --> |REST API| Controller[后端 Controller (Spring Boot)]
+    API --> |REST API| Controller["后端 Controller (Spring Boot)"]
     SSE --> |Stream| Controller
     
     subgraph "Business Layer"
