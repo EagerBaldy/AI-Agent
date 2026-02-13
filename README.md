@@ -4,6 +4,12 @@
 
 本项目是一个基于 **Spring Boot** 和 **Vue 3** 的全能 AI 助手平台，集成了多种垂直领域的智能体（Agent），采用 **LangChain4j** 框架实现 ReAct 架构、RAG（检索增强生成）、MCP（模型上下文协议）和工具调用功能。
 
+
+
+![pict1](pict1.png)
+
+
+
 ## ✨ 核心功能 (Features)
 
 平台内置了六大智能助手模式：
