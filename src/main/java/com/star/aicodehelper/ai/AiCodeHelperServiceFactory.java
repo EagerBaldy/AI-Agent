@@ -7,7 +7,6 @@ import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.document.splitter.DocumentByParagraphSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
@@ -73,10 +72,13 @@ public class AiCodeHelperServiceFactory {
     private ContentRetriever collegeRetriever;
 
     @Resource
-    private McpToolProvider mcpToolProvider;
+    private com.star.aicodehelper.ai.tools.WebSearchTool webSearchTool;
 
     @Resource
-    private com.star.aicodehelper.ai.tools.WebSearchTool webSearchTool;
+    private com.star.aicodehelper.ai.tools.TimeTool timeTool;
+
+    @Resource
+    private com.star.aicodehelper.ai.tools.MathTool mathTool;
 
     @Bean
     public AiCodeHelperService aiCodeHelperService() {
@@ -90,8 +92,7 @@ public class AiCodeHelperServiceFactory {
                 .chatMemoryProvider(memoryId ->
                         MessageWindowChatMemory.withMaxMessages(10)) // 每个会话独立存储
                 .contentRetriever(codeRetriever) // RAG 检索增强生成
-                .tools(new InterviewQuestionTool(), webSearchTool) // 工具调用
-                .toolProvider(mcpToolProvider) // MCP 工具调用
+                .tools(new InterviewQuestionTool(), webSearchTool, timeTool, mathTool) // 工具调用
                 .build();
         return aiCodeHelperService;
     }

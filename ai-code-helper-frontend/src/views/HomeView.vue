@@ -7,6 +7,20 @@
     <h1 class="home-title">AI 全能 Agent</h1>
     <p class="home-subtitle">您的智能工作与生活伙伴</p>
     
+    <!-- 全局聊天记录搜索框 -->
+    <div class="global-search-container">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input 
+          type="text" 
+          v-model="searchQuery" 
+          placeholder="搜索历史聊天记录..." 
+          @keyup.enter="handleSearch" 
+        />
+        <button class="search-btn" @click="handleSearch">搜索</button>
+      </div>
+    </div>
+
     <div class="cards-wrapper">
       <div class="card code-card" @click="switchMode('code')">
         <div class="card-icon">💻</div>
@@ -100,17 +114,69 @@
     </div>
 
     <AppFooter />
+    
+    <!-- 搜索结果弹窗 -->
+    <SearchResultModal 
+      v-model:visible="isSearchModalVisible"
+      :results="searchResults"
+      :isLoading="isSearching"
+      @select="onSearchResultSelect"
+    />
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 import { themes } from '../utils/themes'
 import AppFooter from '../components/layout/AppFooter.vue'
+import SearchResultModal from '../components/chat/SearchResultModal.vue'
 import { useUserStore } from '../stores/user'
+import { useChatStore } from '../stores/chat'
+import { searchGlobalChat } from '../api/chatApi'
 
 const router = useRouter()
 const userStore = useUserStore()
+const chatStore = useChatStore()
+const searchQuery = ref('')
+const isSearchModalVisible = ref(false)
+const isSearching = ref(false)
+const searchResults = ref([])
+
+const handleSearch = async () => {
+  if (!searchQuery.value.trim()) return
+  
+  isSearchModalVisible.value = true
+  isSearching.value = true
+  searchResults.value = []
+  
+  try {
+    const results = await searchGlobalChat(searchQuery.value)
+    searchResults.value = results
+  } catch (error) {
+    console.error('搜索失败', error)
+  } finally {
+    isSearching.value = false
+  }
+}
+
+const onSearchResultSelect = async (item) => {
+  if (item.sessionId) {
+    const targetMode = item.assistantType || 'code' 
+    
+    // 设置高亮消息ID，这样 WorkspaceView 可以在初始化时就知道目标
+    chatStore.highlightMessageId = item.id
+    
+    // 我们可以通过路由的 query 传递目标 sessionId，让 WorkspaceView 去处理
+    router.push({
+      path: `/workspace/${targetMode}`,
+      query: { targetSessionId: item.sessionId }
+    })
+    
+  } else {
+    alert('已选中记录：' + (item.content ? item.content.substring(0, 20).replace(/<[^>]+>/g, '') + '...' : ''))
+  }
+}
 
 const handleLogout = async () => {
   await userStore.logout()
@@ -193,7 +259,68 @@ const switchMode = (mode) => {
 .home-subtitle {
   font-size: 1.2rem;
   color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.global-search-container {
+  width: 100%;
+  max-width: 600px;
   margin-bottom: 60px;
+  padding: 0 20px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg, white);
+  border-radius: 30px;
+  padding: 8px 12px 8px 20px;
+  box-shadow: 0 8px 25px var(--shadow-color, rgba(0,0,0,0.08));
+  border: 1px solid var(--border-color, rgba(0,0,0,0.05));
+  transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+  box-shadow: 0 10px 30px rgba(33, 147, 176, 0.15);
+  border-color: var(--primary-color, #2193b0);
+}
+
+.search-icon {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-right: 12px;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  padding: 8px 0;
+}
+
+.search-box input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.search-btn {
+  background: linear-gradient(45deg, var(--primary-color, #2193b0), #6dd5ed);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(33, 147, 176, 0.3);
 }
 
 .cards-wrapper {

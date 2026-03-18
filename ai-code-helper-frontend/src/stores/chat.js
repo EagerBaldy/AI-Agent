@@ -13,6 +13,7 @@ export const useChatStore = defineStore('chat', {
     currentAiResponse: '',
     connectionError: false,
     currentEventSource: null,
+    highlightMessageId: null, // 新增：用于存储需要高亮和滚动定位的消息ID
   }),
   
   actions: {
@@ -35,7 +36,7 @@ export const useChatStore = defineStore('chat', {
     },
 
     async switchSession(session) {
-      if (this.currentSession && this.currentSession.id === session.id) return
+      if (this.currentSession && String(this.currentSession.id) === String(session.id)) return
       
       this.stopGeneration()
 
@@ -47,6 +48,16 @@ export const useChatStore = defineStore('chat', {
       
       // Load history
       await this.loadHistory()
+      
+      // 如果当前会话不在侧边栏列表里（比如全局搜索强行跳入的其他助手类型的会话），
+      // 我们可以考虑把它临时加入列表，以避免白屏或显示问题
+      if (!this.sessions.find(s => String(s.id) === String(session.id))) {
+        this.sessions.unshift({
+          id: session.id,
+          name: session.name || `会话 ${session.id}`,
+          assistantType: this.currentMode
+        })
+      }
     },
 
     async loadHistory() {

@@ -56,6 +56,7 @@ public class QwenChatModelConfig {
         return QwenChatModel.builder()
                 .apiKey(apiKey)
                 .modelName(modelName)
+                .enableSearch(true)
                 .listeners(List.of(chatModelListener))
                 .build();
     }

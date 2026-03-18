@@ -11,8 +11,14 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/ai_code_helper?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=1234
+      - SPRING_ELASTICSEARCH_URIS=http://elasticsearch:9200
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
     depends_on:
       - db
+      - elasticsearch
+      - kafka
+      - nacos
     networks:
       - ai-net
     restart: always
@@ -43,9 +49,59 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     restart: always
 
+  elasticsearch:
+    build: ./docker/elasticsearch
+    container_name: ai-code-helper-es
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - TZ=Asia/Shanghai
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - ai-net
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    restart: always
+
+  kafka:
+    image: bitnami/kafka:3.5
+    container_name: ai-code-helper-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:29092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092,INTERNAL://kafka:29092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
+    networks:
+      - ai-net
+    restart: always
+
+  nacos:
+    image: nacos/nacos-server:v2.4.3
+    container_name: ai-code-helper-nacos
+    environment:
+      - MODE=standalone
+      - TZ=Asia/Shanghai
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    networks:
+      - ai-net
+    restart: always
+
 networks:
   ai-net:
     driver: bridge
 
 volumes:
   mysql_data:
+  es_data:

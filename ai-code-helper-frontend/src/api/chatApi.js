@@ -108,11 +108,11 @@ export async function checkServiceHealth() {
 export async function getChatHistory(memoryId, assistantType) {
     try {
         // 如果是 Agent 模式，调用 Agent 的历史记录接口
-        // UI 中 currentMode 为 'code', 'travel' 等
-        // assistantType 传入的就是 currentMode
-        // 任何使用 Agent 模式的助手类型都需要走这个逻辑
+        // 注意：搜索跳转时，我们可能不知道准确的 assistantType，但如果它传过来了，或者是伪造的 session 对象，也能继续请求。
         const agentModes = ['code', 'travel', 'essay', 'material', 'medical', 'college'];
-        if (agentModes.includes(assistantType)) {
+        
+        // 我们始终尝试去获取历史，因为即使 assistantType 不完全匹配，sessionId 是唯一的。
+        if (agentModes.includes(assistantType) || !assistantType) {
             console.log('Fetching agent history for sessionId:', memoryId, 'type:', assistantType);
             const response = await axios.get(`${API_BASE_URL}/agent/history`, {
                 params: {
@@ -265,5 +265,45 @@ export async function saveMessage(memoryId, message, isUser, assistantType) {
         })
     } catch (error) {
         console.error('保存消息失败:', error)
+    }
+}
+
+/**
+ * 全局搜索聊天记录 (Elasticsearch 支持)
+ * @param {string} keyword 搜索关键字
+ * @returns {Promise<Array>} 搜索结果列表
+ */
+export async function searchGlobalChat(keyword) {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/search/chat`, {
+            params: { keyword: keyword },
+            withCredentials: true
+        })
+        return response.data?.data?.content || []
+    } catch (error) {
+        console.error('全局搜索失败:', error)
+        return []
+    }
+}
+
+/**
+ * 会话内搜索聊天记录 (Elasticsearch 支持)
+ * @param {number|string} memoryId 会话ID
+ * @param {string} keyword 搜索关键字
+ * @returns {Promise<Array>} 搜索结果列表
+ */
+export async function searchSessionChat(memoryId, keyword) {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/search/chat`, {
+            params: {
+                sessionId: memoryId,
+                keyword: keyword
+            },
+            withCredentials: true
+        })
+        return response.data?.data?.content || []
+    } catch (error) {
+        console.error('会话内搜索失败:', error)
+        return []
     }
 } 

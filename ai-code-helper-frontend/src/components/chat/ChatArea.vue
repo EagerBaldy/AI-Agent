@@ -17,9 +17,11 @@
       <ChatMessage
         v-for="message in chatStore.messages"
         :key="message.id"
+        :id="'message-' + message.id"
         :message="message.content"
         :is-user="message.isUser"
         :timestamp="message.timestamp"
+        :class="{ 'highlight-message': chatStore.highlightMessageId === message.id }"
       />
 
       <!-- AI 正在回复的消息 -->
@@ -77,11 +79,60 @@ const handleSendMessage = (payload) => {
 
 // Auto scroll to bottom
 watch(() => chatStore.messages.length, () => {
-  scrollToBottom()
+  if (!chatStore.highlightMessageId) {
+    scrollToBottom()
+  }
 })
 watch(() => chatStore.currentAiResponse, () => {
-  scrollToBottom()
+  if (!chatStore.highlightMessageId) {
+    scrollToBottom()
+  }
 })
+
+// Listen for highlight requests
+watch(() => chatStore.highlightMessageId, (newId) => {
+  if (newId) {
+    scrollToMessage(newId)
+  }
+})
+
+// Add an onMounted hook to check if there is an initial highlight message
+import { onMounted } from 'vue'
+onMounted(() => {
+  if (chatStore.highlightMessageId) {
+    // Wait for messages to be rendered
+    setTimeout(() => {
+      scrollToMessage(chatStore.highlightMessageId)
+    }, 500)
+  }
+})
+
+// Wait for messages to change, then scroll to highlighted message if any
+watch(() => chatStore.messages, () => {
+  if (chatStore.highlightMessageId) {
+    // 增加一点延迟，确保 DOM 已经完全渲染
+    setTimeout(() => {
+      scrollToMessage(chatStore.highlightMessageId)
+    }, 300)
+  }
+})
+
+const scrollToMessage = (id) => {
+  nextTick(() => {
+    const element = document.getElementById('message-' + id)
+    if (element && messagesContainer.value) {
+      // 滚动到指定元素
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      
+      // 3秒后移除高亮状态
+      setTimeout(() => {
+        if (chatStore.highlightMessageId === id) {
+          chatStore.highlightMessageId = null
+        }
+      }, 3000)
+    }
+  })
+}
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -308,6 +359,17 @@ const welcomeItems = computed(() => {
 .stop-btn:hover {
   background: #ff4d4f;
   color: white;
+}
+
+/* 消息高亮动画 */
+.highlight-message {
+  animation: highlight-pulse 3s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0% { background-color: rgba(var(--primary-color-rgb, 0, 123, 255), 0.2); }
+  50% { background-color: rgba(var(--primary-color-rgb, 0, 123, 255), 0.1); }
+  100% { background-color: transparent; }
 }
 
 /* Copy-paste the Markdown styles from App.vue here or put in global.css */
